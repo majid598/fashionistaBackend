@@ -6,8 +6,6 @@ import { Notification } from "../Models/Notification.js";
 const newProduct = TryCatch(async (req, res, next) => {
   const { name, description, price, category, stock } = req.body;
 
-  console.log(name, description, price, category, stock);
-
   const images = req.files.map((file) => file.path);
 
   if (!images) return next(new ErrorHandler("Please Add Atleast 1 Photo"));
@@ -42,7 +40,27 @@ const getSingleProduct = TryCatch(async (req, res, next) => {
   });
 });
 
-const updateProduct = TryCatch(async (req, res, next) => {});
+const updateProduct = TryCatch(async (req, res, next) => {
+  const { productId, name, price, stock, category, description } = req.body;
+  console.log(productId, name, price, stock, category, description);
+
+  const product = await Product.findById(productId);
+
+  if (!product) return next(new ErrorHandler("Product Not Found"));
+
+  product.name = name ? name : product.name;
+  product.price = price ? price : product.price;
+  product.stock = stock ? stock : product.stock;
+  product.category = category ? category : product.category;
+  product.description = description ? description : product.description;
+
+  await product.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Product Updated Successfuly",
+  });
+});
 
 const deleteProduct = TryCatch(async (req, res, next) => {
   const id = req.params.id;
@@ -67,4 +85,20 @@ const allProducts = TryCatch(async (req, res, next) => {
   });
 });
 
-export { newProduct, allProducts, deleteProduct, getSingleProduct };
+const allCategories = TryCatch(async (req, res, next) => {
+  const categories = await Product.distinct("category");
+
+  return res.status(200).json({
+    success: true,
+    categories,
+  });
+});
+
+export {
+  newProduct,
+  allProducts,
+  deleteProduct,
+  getSingleProduct,
+  allCategories,
+  updateProduct,
+};

@@ -35,7 +35,14 @@ const schema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
+    orders: [
+      {
+        type: mongoose.Types.ObjectId,
+        default: [],
+      },
+    ],
   },
   {
     timestamps: true,

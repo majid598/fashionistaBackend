@@ -32,7 +32,9 @@ import { connectDb } from "./Utils/Db.js";
 import userRoute from "./Routes/User.js";
 import productRoute from "./Routes/Product.js";
 import adminRoute from "./Routes/admin.js";
+import orderRoute from "./Routes/order.js";
 import Notification from "./Routes/Notification.js";
+import reviewRoute from "./Routes/review.js";
 import { errorMiddleware } from "./Middlewares/errorMiddleware.js";
 
 connectDb(process.env.MONGO_URI);
@@ -40,6 +42,8 @@ connectDb(process.env.MONGO_URI);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/admin", adminRoute);
+app.use("/api/v1/order", orderRoute);
+app.use("/api/v1/review", reviewRoute);
 app.use("/api/v1/notification", Notification);
 
 app.use(errorMiddleware);

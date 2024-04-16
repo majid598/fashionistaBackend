@@ -4,8 +4,7 @@ import { User } from "../Models/User.js";
 import ErrorHandler from "../Utils/utility.js";
 
 const editUserRoll = TryCatch(async (req, res, next) => {
-  const { role, userId } = req.body;
-  console.log(role, userId);
+  const { userId, role } = req.body;
 
   if (!role)
     return next(new ErrorHandler("Please Enter Role For this Uer", 404));
