@@ -11,7 +11,16 @@ const PORT = process.env.PORT;
 
 app.use(express.json());
 app.use(
-  cors()
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "https://fashionista-mocha.vercel.app",
+      // process.env.CLIENT_URL,
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
 );
 app.use(cookieParser());
 
