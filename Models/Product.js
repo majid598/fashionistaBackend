@@ -25,7 +25,7 @@ const productSchema = mongoose.Schema({
   },
   images: {
     type: [String], // Array of strings (image URLs)
-    default: [],
+    required: true,
   },
   numOfReviews: {
     type: Number,
@@ -54,12 +54,6 @@ const productSchema = mongoose.Schema({
       },
     },
   ],
-
-  // user: {
-  //   type: mongoose.Schema.ObjectId,
-  //   ref: "User",
-  //   required: true,
-  // },
 });
 
 export const Product = mongoose.model("Product", productSchema);

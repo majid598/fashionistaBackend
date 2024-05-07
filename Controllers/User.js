@@ -4,6 +4,7 @@ import { Notification } from "../Models/Notification.js";
 import { User } from "../Models/User.js";
 import { sendToken, cookieOptions } from "../Utils/features.js";
 import ErrorHandler from "../Utils/utility.js";
+import { v2 as cloudinary } from "cloudinary";
 
 const newUser = TryCatch(async (req, res, next) => {
   const { name, username, email, password } = req.body;
@@ -84,17 +85,14 @@ const myProfile = TryCatch(async (req, res, next) => {
 });
 
 const profilePic = TryCatch(async (req, res, next) => {
-  const { userId } = req.body;
-
-  const profile = req.file;
-
-  console.log(userId, profile);
+  const { profile } = req.body;
+  console.log(profile)
 
   if (!profile) return next(new ErrorHandler("Please Select a photo", 404));
 
-  const user = await User.findById(userId);
+  const user = await User.findById(req.user);
 
-  user.profile = profile.path;
+  user.profile = profile;
 
   await user.save();
 

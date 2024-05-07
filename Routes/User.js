@@ -18,7 +18,7 @@ const Router = express.Router();
 
 Router.post("/new", newUser);
 
-Router.post("/upload", upload.single("image"), profilePic);
+Router.post("/upload", isAuthenticated, profilePic);
 
 Router.post("/login", login);
 

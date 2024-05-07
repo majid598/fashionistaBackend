@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import fileUpload from "express-fileupload";
 const app = express();
 import cookieParser from "cookie-parser";
 
@@ -15,13 +16,14 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:4173",
-       process.env.CLIENT_URL      
+      process.env.CLIENT_URL,
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 app.use(cookieParser());
+app.use(fileUpload());
 
 app.get("/", (req, res) => {
   res.send("Server Working");

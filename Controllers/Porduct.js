@@ -4,13 +4,7 @@ import { Product } from "../Models/Product.js";
 import { Notification } from "../Models/Notification.js";
 
 const newProduct = TryCatch(async (req, res, next) => {
-  const { name, description, price, category, stock } = req.body;
-
-  const images = req.files.map((file) => file.path);
-
-  if (!images) return next(new ErrorHandler("Please Add Atleast 1 Photo"));
-
-  console.log(name, description, price, category, stock);
+  const { name, description, price, category, stock, images } = req.body;
 
   if (!name || !description || !price || !category || !stock)
     return next(new ErrorHandler("All Fields Are required", 404));
