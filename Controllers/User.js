@@ -86,7 +86,6 @@ const myProfile = TryCatch(async (req, res, next) => {
 
 const profilePic = TryCatch(async (req, res, next) => {
   const { profile } = req.body;
-  console.log(profile)
 
   if (!profile) return next(new ErrorHandler("Please Select a photo", 404));
 
