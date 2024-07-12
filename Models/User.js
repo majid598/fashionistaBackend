@@ -8,28 +8,22 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    profile: {
-      type: String,
-    },
     username: {
       type: String,
       required: true,
-      unique: true,
+    },
+    profile: {
+      public_id: String,
+      url: String,
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      validate: {
-        validator: (value) => {
-          return validator.isEmail(value);
-        },
-        message: `This is not a valid email`,
-      },
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "seller", "admin"],
       default: "user",
     },
     password: {
@@ -37,10 +31,33 @@ const schema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    likedProducts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
+    cartItems: [
+      {
+        _id: false,
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+        },
+        price: {
+          type: Number,
+          required: true
+        },
+        quantity: {
+          type: Number,
+          default: 1
+        }
+      }
+    ],
     orders: [
       {
-        type: mongoose.Types.ObjectId,
-        default: [],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order",
       },
     ],
   },

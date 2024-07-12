@@ -1,19 +1,67 @@
+import fs from "fs";
+import path from "path";
 import { TryCatch } from "../Middlewares/errorMiddleware.js";
-import ErrorHandler from "../Utils/utility.js";
 import { Product } from "../Models/Product.js";
-import { Notification } from "../Models/Notification.js";
+import { User } from "../Models/User.js";
+import ErrorHandler from "../Utils/utility.js";
+import { v2 as cloudinary } from "cloudinary";
 
 const newProduct = TryCatch(async (req, res, next) => {
-  const { name, description, price, category, stock, images } = req.body;
+  console.log(req.body);
+  const {
+    name,
+    brandName,
+    regularPrice,
+    salePrice,
+    type,
+    stockStatus,
+    stockQuantity,
+    unit,
+    category,
+    description,
+    images,
+  } = req.body;
 
-  if (!name || !description || !price || !category || !stock)
+  console.log(
+    name,
+    brandName,
+    regularPrice,
+    salePrice,
+    type,
+    stockStatus,
+    stockQuantity,
+    unit,
+    category,
+    description,
+    images
+  );
+
+  if (
+    !name ||
+    !brandName ||
+    !regularPrice ||
+    !salePrice ||
+    !type ||
+    !stockStatus ||
+    !stockQuantity ||
+    !unit ||
+    !category ||
+    !description ||
+    !images
+  )
     return next(new ErrorHandler("All Fields Are required", 404));
   const product = await Product.create({
+    saller: req.user,
     name,
-    description,
-    price,
+    brandName,
+    regularPrice,
+    salePrice,
+    type,
+    stockStatus,
+    stockQuantity,
+    unit,
     category: category.toLowerCase(),
-    stock,
+    description,
     images,
   });
 
@@ -62,6 +110,10 @@ const deleteProduct = TryCatch(async (req, res, next) => {
   const product = await Product.findById(id);
 
   if (!product) return next(new ErrorHandler("Product Not Found"));
+  const deletePromises = product.images.map((image) =>
+    cloudinary.uploader.destroy(image.public_id)
+  );
+  await Promise.all(deletePromises);
 
   await product.deleteOne();
 
@@ -70,9 +122,45 @@ const deleteProduct = TryCatch(async (req, res, next) => {
     message: `${product.name} Product Deleted`,
   });
 });
+const addToWishlist = TryCatch(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+  const user = await User.findById(req.user);
+
+  if (!product) return next(new ErrorHandler("Product Not Found"));
+
+  if (user.likedProducts.indexOf(product._id) === -1) {
+    user.likedProducts.push(product._id);
+  } else {
+    user.likedProducts.splice(user.likedProducts.indexOf(product._id), 1);
+  }
+
+  await user.save();
+
+  return res.status(200).json({
+    success: true,
+    message: `${product.name} ${user?.likedProducts?.includes(req.params.id)
+      ? "Add To Wishlist"
+      : "Removed From Wishlist"
+      }`,
+  });
+});
 
 const allProducts = TryCatch(async (req, res, next) => {
-  const products = await Product.find({});
+  const { category } = req.query;
+
+  let products;
+  if (category) {
+    products = await Product.find({ category }).populate(
+      "saller",
+      "name profile"
+    );
+  } else {
+    products = await Product.find().populate(
+      "saller",
+      "name profile"
+    );
+  }
+
   return res.status(200).json({
     success: true,
     products,
@@ -87,12 +175,72 @@ const allCategories = TryCatch(async (req, res, next) => {
     categories,
   });
 });
+const thisMonth = TryCatch(async (req, res, next) => {
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+  const products = await Product.aggregate([
+    {
+      $lookup: {
+        from: 'orders',
+        localField: '_id',
+        foreignField: 'orderItems.product',
+        as: 'orders',
+      },
+    },
+    { $unwind: '$orders' },
+    { $unwind: '$orders.orderItems' },
+    {
+      $match: {
+        'orders.createdAt': { $gte: startOfMonth, $lte: endOfMonth },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        name: { $first: '$name' },
+        description: { $first: '$description' },
+        images: { $first: '$images' },
+        salePrice: { $first: '$salePrice' },
+        regularPrice: { $first: '$regularPrice' },
+        stockQuantity: { $first: '$stockQuantity' },
+        stockStatus: { $first: '$stockStatus' },
+        reviews: { $first: '$reviews' },
+        numOfReviews: { $first: '$numOfReviews' },
+        sold: { $sum: '$orders.orderItems.quantity' },
+      },
+    },
+    { $sort: { sold: -1 } },
+    { $limit: 10 },
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    products,
+  });
+});
+
+const upload = async (req, res, next) => {
+  try {
+    const image = req.file;
+    console.log(image);
+    // Delete the file from local uploads folder
+    return res.status(200).json({
+      success: true,
+      message: "File uploaded successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+};
 
 export {
-  newProduct,
+  addToWishlist,
+  allCategories,
   allProducts,
   deleteProduct,
   getSingleProduct,
-  allCategories,
+  newProduct,
   updateProduct,
+  upload, thisMonth
 };

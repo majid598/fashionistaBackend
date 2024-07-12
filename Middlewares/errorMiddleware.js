@@ -6,6 +6,7 @@ const errorMiddleware = (err, req, res, next) => {
 
   if (err.code === 11000) {
     const error = Object.keys(err.keyPattern).join(",");
+    console.log(err)
     err.message = `Duplicate Field ${error}`;
     err.statusCode = 400;
   }

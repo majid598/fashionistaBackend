@@ -2,28 +2,53 @@ import { TryCatch } from "../Middlewares/errorMiddleware.js";
 import { Order } from "../Models/Order.js";
 import { Product } from "../Models/Product.js";
 import { User } from "../Models/User.js";
+import { generateUniqueID } from "../Utils/features.js";
 import ErrorHandler from "../Utils/utility.js";
 
 const createOrder = TryCatch(async (req, res, next) => {
-  const { userId, totalAmount, shippingInfo, orderItems } = req.body;
+  const {
+    orderItems,
+    shippingAddress,
+    paymentMethod,
+    itemsPrice,
+    shippingPrice,
+    taxPrice,
+    totalPrice,
+  } = req.body;
 
-  if (!shippingInfo)
+  if (!shippingAddress)
     return next(new ErrorHandler("Please Enter shippingInfo", 404));
 
+  const uniqueID = await generateUniqueID();
+
   const order = await Order.create({
-    user: userId,
-    totalAmount,
+    orderId: uniqueID,
+    user: req.user,
     orderItems,
-    shippingInfo,
+    shippingAddress,
+    paymentMethod,
+    itemsPrice,
+    shippingPrice,
+    taxPrice,
+    totalPrice,
   });
 
-  const user = await User.findById(userId);
+  for (const item of orderItems) {
+    const product = await Product.findById(item.product);
+    if (product) {
+      product.sold += item.quantity;
+      product.stockQuantity -= item.quantity;
+      await product.save();
+    }
+  }
+
+  const user = await User.findById(req.user);
   user.orders.push(order);
   await user.save();
 
   return res.status(200).json({
     success: true,
-    message: "Order Placed Successfuly",
+    message: "Order Placed Successfully",
   });
 });
 
@@ -45,7 +70,7 @@ const cancelOrder = TryCatch(async (req, res, next) => {
 });
 
 const allOrders = TryCatch(async (req, res, next) => {
-  const orders = await Order.find({});
+  const orders = await Order.find({}).populate('orderItems.product', 'name price category images').populate("user", "name").sort({ createdAt: -1 });
 
   return res.status(200).json({
     success: true,
@@ -119,6 +144,23 @@ const statusUpdate = TryCatch(async (req, res, next) => {
   });
 });
 
+const stats = TryCatch(async (req, res, next) => {
+  const processingOrder = await Order.find({ status: "processing" })
+  const confirmedOrder = await Order.find({ status: "confirmed" })
+  const shippedOrder = await Order.find({ status: "shipped" })
+  const deliveredOrder = await Order.find({ status: "delivered" })
+  const canceledOrder = await Order.find({ status: "canceled" })
+
+  return res.status(200).json({
+    success: true,
+    processingOrder: processingOrder.length,
+    confirmedOrder: confirmedOrder.length,
+    shippedOrder: shippedOrder.length,
+    deliveredOrder: deliveredOrder.length,
+    canceledOrder: canceledOrder.length,
+  })
+})
+
 export {
   allOrders,
   cancelOrder,
@@ -128,4 +170,5 @@ export {
   myOrders,
   statusUpdate,
   cancelations,
+  stats
 };

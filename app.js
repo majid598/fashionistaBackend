@@ -1,9 +1,10 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import fileUpload from "express-fileupload";
-const app = express();
+import { v2 as cloudinary } from "cloudinary";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+const app = express();
+
 
 dotenv.config({
   path: "./.env",
@@ -15,6 +16,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "http://localhost:5174",
       "http://localhost:4173",
       process.env.CLIENT_URL,
     ],
@@ -23,21 +25,27 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(fileUpload());
 
 app.get("/", (req, res) => {
   res.send("Server Working");
 });
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 import { connectDb } from "./Utils/Db.js";
 
-import userRoute from "./Routes/User.js";
+import { errorMiddleware } from "./Middlewares/errorMiddleware.js";
+import cartRoute from "./Routes/Cart.js";
+import Notification from "./Routes/Notification.js";
 import productRoute from "./Routes/Product.js";
+import userRoute from "./Routes/User.js";
 import adminRoute from "./Routes/admin.js";
 import orderRoute from "./Routes/order.js";
-import Notification from "./Routes/Notification.js";
 import reviewRoute from "./Routes/review.js";
-import { errorMiddleware } from "./Middlewares/errorMiddleware.js";
 
 connectDb(process.env.MONGO_URI);
 
@@ -47,6 +55,7 @@ app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/review", reviewRoute);
 app.use("/api/v1/notification", Notification);
+app.use("/api/v1/cart", cartRoute);
 
 app.use(errorMiddleware);
 

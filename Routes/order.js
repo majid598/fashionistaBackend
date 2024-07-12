@@ -6,12 +6,14 @@ import {
   createOrder,
   getSingleOrder,
   myOrders,
-  statusUpdate,
+  statusUpdate, stats
 } from "../Controllers/order.js";
 import { isAuthenticated } from "../Middlewares/auth.js";
 const Router = express.Router();
 
-Router.post("/create", createOrder);
+Router.post("/create", isAuthenticated, createOrder);
+
+Router.get("/admin/stats", isAuthenticated, stats);
 
 Router.get("/all", allOrders);
 

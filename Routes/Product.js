@@ -1,22 +1,31 @@
 import express from "express";
 import {
+  addToWishlist,
+  allCategories,
   allProducts,
   deleteProduct,
-  newProduct,
   getSingleProduct,
-  allCategories,
+  newProduct,
   updateProduct,
+  upload,thisMonth
 } from "../Controllers/Porduct.js";
-import { upload } from "../Middlewares/Multer.js";
+import { isAuthenticated } from "../Middlewares/auth.js";
+import { multiple, singleAvatar } from "../Middlewares/Multer.js";
+
 const Router = express.Router();
 
-Router.post("/new", upload.array("images", 5), newProduct);
+Router.post("/new", isAuthenticated, newProduct);
 
 Router.get("/all", allProducts);
 
+Router.get("/explore/thismonth", thisMonth);
+
 Router.get("/categories", allCategories);
+Router.get("/add-to-wishlist/:id", isAuthenticated, addToWishlist);
 
 Router.put("/update", updateProduct);
+
+Router.post("/upload", singleAvatar, upload);
 
 Router.route("/:id").delete(deleteProduct).get(getSingleProduct);
 

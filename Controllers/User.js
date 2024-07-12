@@ -2,16 +2,26 @@ import { compare } from "bcrypt";
 import { TryCatch } from "../Middlewares/errorMiddleware.js";
 import { Notification } from "../Models/Notification.js";
 import { User } from "../Models/User.js";
-import { sendToken, cookieOptions } from "../Utils/features.js";
+import {
+  cookieOptions,
+  sendToken,
+  uploadFilesToCloudinary,
+} from "../Utils/features.js";
 import ErrorHandler from "../Utils/utility.js";
+import { Product } from "../Models/Product.js";
 import { v2 as cloudinary } from "cloudinary";
 
 const newUser = TryCatch(async (req, res, next) => {
-  const { name, username, email, password } = req.body;
+  const { name, email, password } = req.body;
+  console.log(name, email, password);
 
+  if (!name || !email || !password) {
+    res.status(400).json({
+      success: false,
+      message: "All Fields Are Required",
+    });
+  }
   const emailExist = await User.findOne({ email });
-  const userExist = await User.findOne({ username });
-
   if (emailExist) {
     res.status(400).json({
       success: false,
@@ -19,23 +29,9 @@ const newUser = TryCatch(async (req, res, next) => {
     });
   }
 
-  if (userExist) {
-    res.status(400).json({
-      success: false,
-      message: "Username Already Exist",
-    });
-  }
-
-  if (!name || !username || !email || !password) {
-    res.status(400).json({
-      success: false,
-      message: "All Fields Are Required",
-    });
-  }
-
   const user = await User.create({
     name,
-    username,
+    username: name,
     email,
     password,
   });
@@ -110,26 +106,35 @@ const allUsers = TryCatch(async (req, res, next) => {
   });
 });
 
-const updateProfile = TryCatch(async (req, res, next) => {
-  let user = User.findById(req.params.id);
+const wishlist = TryCatch(async (req, res, next) => {
+  const user = await User.findById(req.user).populate("likedProducts", "name salePrice regularPrice images seller numOfReviews");
 
-  if (!user) {
-    return res.status(200).json({
-      success: true,
-      message: "User Not Found",
-    });
+
+  return res.status(200).json({
+    success: true,
+    products: user.likedProducts,
+  });
+});
+
+const updateProfile = TryCatch(async (req, res, next) => {
+  const image = req.file;
+  const user = await User.findById(req.user);
+  if (!image) return next(new ErrorHandler("Please select an image", 400));
+
+  if (user.profile.public_id) {
+    await cloudinary.uploader.destroy(user.profile.public_id);
   }
 
-  user = await User.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-    useFindAndModify: false,
-  });
+  const result = await uploadFilesToCloudinary([image]);
+  console.log(result);
+  user.profile.public_id = result[0].public_id;
+  user.profile.url = result[0].url;
+
+  await user.save();
 
   res.status(200).json({
     success: true,
     message: "Profile Update Successfully",
-    user,
   });
 });
 
@@ -160,15 +165,17 @@ const getUserById = TryCatch(async (req, res, next) => {
   });
 });
 
+
 export {
   allNotifications,
   allUsers,
   deleteNotification,
+  getUserById,
   login,
+  logout,
   myProfile,
   newUser,
-  updateProfile,
   profilePic,
-  logout,
-  getUserById,
+  updateProfile,
+  wishlist,
 };
