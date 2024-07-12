@@ -16,8 +16,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:5174",
       "http://localhost:4173",
+      "https://exclusive-net.vercel.app",
       process.env.CLIENT_URL,
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
