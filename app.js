@@ -18,6 +18,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:4173",
       "https://exclusive-net.vercel.app",
+      "https://eshopper-e.vercel.app",
       process.env.CLIENT_URL,
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],

@@ -46,6 +46,7 @@ const newUser = TryCatch(async (req, res, next) => {
 const login = TryCatch(async (req, res, next) => {
   const { email, password } = req.body;
   console.log(email, password);
+  if (!email || !password) return next(new ErrorHandler("All Fields Are Required", 400))
 
   const user = await User.findOne({ email }).select("+password");
 
