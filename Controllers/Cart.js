@@ -26,7 +26,6 @@ const addToCart = TryCatch(async (req, res, next) => {
     message: `${product.name} Added To Cart`,
   });
 });
-
 const cart = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.user).populate("cartItems.product", "name images salePrice stockQuantity");
 
@@ -69,5 +68,56 @@ const decrease = TryCatch(async (req, res, next) => {
     success: true,
   });
 });
+const removeFromCart = TryCatch(async (req, res, next) => {
+  const user = await User.findById(req.user)
 
-export { addToCart, cart, increase, decrease };
+  const cartItem = user.cartItems.find(cartItem => cartItem.product.toString() === req.params.id);
+  if (!cartItem) {
+    return next(new ErrorHandler('Product not found in cart'))
+  }
+
+  user.cartItems.pull(cartItem);
+  await user.save();
+
+  return res.status(200).json({
+    success: true,
+    message: 'Product removed from cart'
+  });
+});
+const resetCart = TryCatch(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.user, { cartItems: [] });
+  return res.status(200).json({
+    success: true,
+    message: 'Cart reset successfully'
+  });
+});
+const moveWishlistToCart = TryCatch(async (req, res, next) => {
+  console.log(req.user)
+  const user = await User.findById(req.user).populate("likedProducts");
+
+  if (!user) return next(new ErrorHandler("User not found", 400));
+
+  if (user.likedProducts.length === 0) return next(new ErrorHandler("No products in wishlist", 400))
+
+  user.likedProducts.forEach((product) => {
+    const itemInCart = user.cartItems.find(
+      (item) => item.product.toString() === product._id.toString()
+    );
+
+    if (!itemInCart) {
+      user.cartItems.push({
+        product: product._id,
+        price: product.salePrice,
+        quantity: 1,
+      });
+      user.likedProducts.pull(product._id);
+    }
+  });
+
+  await user.save();
+
+  return res.status(200).json({ message: "Wishlist items moved to cart" });
+});
+
+
+export { addToCart, cart, increase, decrease, removeFromCart, resetCart, moveWishlistToCart };

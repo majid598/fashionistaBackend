@@ -7,7 +7,9 @@ import {
   getSingleProduct,
   newProduct,
   updateProduct,
-  upload,thisMonth
+  upload, thisMonth,
+  addToFlashSale,
+  flashSale
 } from "../Controllers/Porduct.js";
 import { isAuthenticated } from "../Middlewares/auth.js";
 import { multiple, singleAvatar } from "../Middlewares/Multer.js";
@@ -26,6 +28,10 @@ Router.get("/add-to-wishlist/:id", isAuthenticated, addToWishlist);
 Router.put("/update", updateProduct);
 
 Router.post("/upload", singleAvatar, upload);
+
+Router.get("/add-to-sale/:id", addToFlashSale);
+
+Router.get("/products/flash-sale", flashSale);
 
 Router.route("/:id").delete(deleteProduct).get(getSingleProduct);
 

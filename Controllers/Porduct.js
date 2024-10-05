@@ -5,6 +5,8 @@ import { Product } from "../Models/Product.js";
 import { User } from "../Models/User.js";
 import ErrorHandler from "../Utils/utility.js";
 import { v2 as cloudinary } from "cloudinary";
+import { FlashSale } from "../Models/FlashSale.js";
+import { start } from "repl";
 
 const newProduct = TryCatch(async (req, res, next) => {
   console.log(req.body);
@@ -51,7 +53,7 @@ const newProduct = TryCatch(async (req, res, next) => {
   )
     return next(new ErrorHandler("All Fields Are required", 404));
   const product = await Product.create({
-    saller: req.user,
+    seller: req.user,
     name,
     brandName,
     regularPrice,
@@ -151,12 +153,12 @@ const allProducts = TryCatch(async (req, res, next) => {
   let products;
   if (category) {
     products = await Product.find({ category }).populate(
-      "saller",
+      "seller",
       "name profile"
     );
   } else {
     products = await Product.find().populate(
-      "saller",
+      "seller",
       "name profile"
     );
   }
@@ -234,6 +236,47 @@ const upload = async (req, res, next) => {
   }
 };
 
+const addToFlashSale = TryCatch(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) return next(new ErrorHandler("Product Not Found"));
+
+  const sale = await FlashSale.findOne()
+  if (sale) {
+    sale.products.push(product._id);
+    product.flashSale = true;
+    await product.save();
+    await sale.save();
+    return res.status(200).json({
+      success: true,
+      message: `${product.name} Added To Flash Sale`,
+    });
+  }
+
+  const newSale = await FlashSale.create({
+    products: [product._id],
+    startTime: new Date(),
+    endTime: new Date(new Date().setDate(new Date().getDate() + 4)),
+  });
+
+  product.flashSale = true;
+  await product.save();
+
+  return res.status(200).json({
+    success: true,
+    message: `${product.name} Added To Flash Sale`,
+  });
+});
+const flashSale = TryCatch(async (req, res, next) => {
+  const products = await Product.find({ flashSale: true });
+  const flashSale = await FlashSale.findOne();
+
+  return res.status(200).json({
+    success: true,
+    flashSale,
+    products,
+  });
+});
+
 export {
   addToWishlist,
   allCategories,
@@ -242,5 +285,8 @@ export {
   getSingleProduct,
   newProduct,
   updateProduct,
-  upload, thisMonth
+  upload,
+  thisMonth,
+  addToFlashSale,
+  flashSale
 };

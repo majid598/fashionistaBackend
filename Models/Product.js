@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const productSchema = mongoose.Schema(
   {
-    saller: {
+    seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
@@ -16,6 +16,11 @@ const productSchema = mongoose.Schema(
       required: [true, "Please Enter product Brand Name"],
       trim: true,
     },
+    colors: [String],
+    sizes: [String],
+    size: String,
+    weight: String,
+    unit: String,
     regularPrice: {
       type: Number,
       required: [true, "Please Enter product Regular Price"],
@@ -85,7 +90,8 @@ const productSchema = mongoose.Schema(
         },
       },
     ],
-    sold: { type: Number, default: 0 }
+    sold: { type: Number, default: 0 },
+    flashSale: { type: Boolean, default: false },
   },
   {
     timestamps: true,

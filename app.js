@@ -3,6 +3,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import Stripe from "stripe";
+
 const app = express();
 
 
@@ -10,6 +12,8 @@ dotenv.config({
   path: "./.env",
 });
 const PORT = process.env.PORT;
+
+export const stripe = new Stripe(process.env.STRIPE_KEY); // Replace with your Stripe secret key
 
 app.use(express.json());
 app.use(
@@ -47,6 +51,7 @@ import userRoute from "./Routes/User.js";
 import adminRoute from "./Routes/admin.js";
 import orderRoute from "./Routes/order.js";
 import reviewRoute from "./Routes/review.js";
+import paymentRoute from "./Routes/Payment.js";
 
 connectDb(process.env.MONGO_URI);
 
@@ -57,6 +62,7 @@ app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/review", reviewRoute);
 app.use("/api/v1/notification", Notification);
 app.use("/api/v1/cart", cartRoute);
+app.use("/api/v1/payment", paymentRoute);
 
 app.use(errorMiddleware);
 

@@ -49,6 +49,7 @@ const createOrder = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "Order Placed Successfully",
+    order
   });
 });
 
