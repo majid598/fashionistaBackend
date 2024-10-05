@@ -4,6 +4,10 @@ import validator from "validator";
 
 const schema = new mongoose.Schema(
   {
+    cusId: {
+      type: String,
+      default: "",
+    },
     name: {
       type: String,
       required: true,
@@ -46,13 +50,13 @@ const schema = new mongoose.Schema(
         },
         price: {
           type: Number,
-          required: true
+          required: true,
         },
         quantity: {
           type: Number,
-          default: 1
-        }
-      }
+          default: 1,
+        },
+      },
     ],
     orders: [
       {
